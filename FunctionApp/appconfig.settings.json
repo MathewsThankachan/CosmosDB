@@ -1,0 +1,38 @@
+{
+  "IsEncrypted": false,
+
+  "SourceFile": {
+    "FileMaxRows": "100000",
+    "FileName": "PriceData_", // "PriceData_DD-MMM-YYY_FileSeqNumber",
+    "SplitFiles": "true"
+  },
+  "Storage": {
+    "StorageEndpointUrl": "https://cosmospricedata.file.core.windows.net/",
+    "StorageAccountName": "cosmospricedata",
+    "StorageAccountKey": "kNS+aGn6MhPRPXG+l/eeir0YQbgv/8ZmgPm4WIGQgvDTZUkkUB7dpnSDxnbP4UD8s5o5eG9aLQprMdu5Q5h0RQ==",
+    "StorageContainerName": "cosmosdb",
+    "StorageConnectionString": "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+  },
+  "CosmosDB": {
+    "CosmosDBEndpointUrl": "https://cosmos-ppd.documents.azure.com:443",
+    "CosmosDBAuthorizationKey": "zhMxW9qtZ00wwfJIJfi871YwWDtZKyaQ616Jbpii4yb3yJl01zl8fRdiXNjVc6O0PgGq4UuR2NAmfLLOxyL9nw==",
+    "DatabaseName": "PaidPriceData",
+    "ContainerName": "pricedata",
+    "CosmosDBConnectionString": "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+  },
+
+  "Dev_Storage": {
+    "StorageEndpointUrl": "http://127.0.0.1:10000/",
+    "StorageAccountName": "devstoreaccount1",
+    "StorageAccountKey": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==",
+    "StorageContainerName": "cosmosdb",
+    "StorageConnectionString": "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+  },
+  "Dev_CosmosDB": {
+    "CosmosDBEndpointUrl": "https://cosmos-ppd.documents.azure.com:443",
+    "CosmosDBAuthorizationKey": "zhMxW9qtZ00wwfJIJfi871YwWDtZKyaQ616Jbpii4yb3yJl01zl8fRdiXNjVc6O0PgGq4UuR2NAmfLLOxyL9nw==",
+    "DatabaseName": "PaidPriceData",
+    "ContainerName": "pricedata",
+    "CosmosDBConnectionString": "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+  }
+}

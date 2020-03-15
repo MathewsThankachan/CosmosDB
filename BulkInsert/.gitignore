@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/BulkInsert
+/packages
+/obj/Debug
+/bin/Debug
+/Datafile/2019_PricePaidData.txt
+/Datafile/pp-complete.txt
