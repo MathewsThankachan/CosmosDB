@@ -8,6 +8,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -32,14 +33,14 @@ namespace FunctionApp
         static string FileName;
 
         [FunctionName("BulkInsert")]
-        public static void Run([TimerTrigger("0 * 12  * * *")]TimerInfo myTimer, ILogger log)
+        public static void Run([TimerTrigger("0 */3 *  * * *")]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             Intialiaze();
 
-            // ReadFileFromStorage();
+             ReadFileFromStorage();
 
-            SplitStorageFile();
+            //SplitStorageFile();
         }
 
 
@@ -122,7 +123,7 @@ namespace FunctionApp
 
             StorageCredentials storageCredentials = new StorageCredentials(StorageAccountName, StorageAccountKey);
             StorageUri storageUri = new StorageUri(new Uri(StorageEndpointUrl));
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(StorageConnectionString);//= new CloudStorageAccount(storageCredentials,true);
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(StorageConnectionString);
 
 
             CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
@@ -226,7 +227,7 @@ namespace FunctionApp
             //CosmosClient client = new CosmosClient(CosmosDBEndpointUrl, CosmosDBAuthorizationKey, options);
             CosmosClient client = new CosmosClient(CosmosDBConnectionString, options);
             Database database = await client.CreateDatabaseIfNotExistsAsync(DatabaseName);
-            Container container = await database.CreateContainerIfNotExistsAsync(ContainerName, "/Postcode");
+            Container container = await database.CreateContainerIfNotExistsAsync(ContainerName, "/County");
             //database.ReplaceThroughputAsync()
 
             //ThroughputResponse throughput = await container.ReplaceThroughputAsync(20000);
@@ -236,10 +237,10 @@ namespace FunctionApp
 
 
 
-            foreach (var item in lstPricedata)
+            foreach (var item in lstPricedata.Take(100000))
             {
                 cnt++; // only used for debugging to see current record index being processed
-                tasks.Add(container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.Postcode)));
+                tasks.Add(container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.County)));
             }
 
             await Task.WhenAll(tasks);

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Configuration;
@@ -11,20 +13,37 @@ namespace FunctionApp
     {
 
         [FunctionName("blobTriggerCheckOkFile")]
-        public static void Run([BlobTrigger("pricing/{name}", Connection = "StorageConnectionString")]Stream myBlob, string name, ILogger log)
+        public async static void Run([BlobTrigger("pricing/{name}", Connection = "StorageConnectionString")]Stream myBlob, string name, ILogger log)
         {
 
-            string uploadedFileName = name ;
+            string uploadedFileName = name;
+            List<string> lstFileNames = new List<string>();
 
-            if (name.ToLower()=="ok.txt")
+            if (name.ToLower() == "ok.txt") //look for ok file on the pricing container
             {
-                //
-                SplitStorageFiles.SplitStorageFile();
+                //Write code to list the contents of the storage and download them one by one
+
+
+                //Move the storage files to the Staging folder of the container
+
+                lstFileNames = SplitStorageFiles.GetStorageFiles();
+
+
 
             }
-            log.LogInformation($"C# Blob trigger function Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
+
+            foreach (var fileName in lstFileNames)
+            {
+
+                //await SplitStorageFiles.DownloadFileAsync(fileName);
+            }
+
+            SplitStorageFiles.SplitStorageFile();
+
         }
 
-
     }
+
+
+
 }

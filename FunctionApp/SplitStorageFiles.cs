@@ -1,4 +1,6 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,11 +20,23 @@ namespace FunctionApp
     {
 
 
+        static StorageCredentials storageCredentials;
+        static StorageUri storageUri;
+        static CloudStorageAccount storageAccount;
+        static CloudBlobClient cloudBlobClient;
+
+        static BlobContainerClient blobContainerClient;
+        static CloudBlobContainer cloudBlobContainer;
+        static CloudBlobContainer cloudBlobPricingContainer;
+        static CloudBlob cloudBlob;
+        static CloudBlockBlob blockBlob;
+
         static string CosmosDBEndpointUrl;
         static string CosmosDBAuthorizationKey;
         static string StorageAccountName;
         static string StorageAccountKey;
         static string StorageContainerName;
+        static string StoragePricingContainerName;
         static string StorageEndpointUrl;
         static string DatabaseName;
         static string ContainerName;
@@ -52,34 +66,45 @@ namespace FunctionApp
             StorageAccountName = config.GetSection("Dev_Storage")["StorageAccountName"];
             StorageAccountKey = config.GetSection("Dev_Storage")["StorageAccountKey"];
             StorageContainerName = config.GetSection("Dev_Storage")["StorageContainerName"];
+            StoragePricingContainerName = config.GetSection("Dev_Storage")["StoragePricingContainerName"];
+
 
             StorageConnectionString = config.GetSection("Dev_Storage")["StorageConnectionString"];
 
             SplitFiles = bool.Parse(config.GetSection("SourceFile")["SplitFiles"]) || false;
             FileMaxRows = int.Parse(config.GetSection("SourceFile")["FileMaxRows"]);
             FileName = config.GetSection("SourceFile")["FileName"];
+
+            storageCredentials = new StorageCredentials(StorageAccountName, StorageAccountKey);
+            storageUri = new StorageUri(new Uri(StorageEndpointUrl));
+            storageAccount = CloudStorageAccount.Parse(StorageConnectionString);
+            cloudBlobClient = storageAccount.CreateCloudBlobClient();
+            cloudBlobContainer = cloudBlobClient.GetContainerReference(StorageContainerName);
+            cloudBlobPricingContainer = cloudBlobClient.GetContainerReference(StoragePricingContainerName);
+            blobContainerClient = new BlobContainerClient(StorageConnectionString, StoragePricingContainerName);
+
+            cloudBlob = cloudBlobContainer.GetBlobReference("mergedfiles.txt "); //2019_PricePaidData.txt //not used
+
+
         }
         public async static void SplitStorageFile()
         {
             Intialiaze();
 
-            StorageCredentials storageCredentials = new StorageCredentials(StorageAccountName, StorageAccountKey);
-            StorageUri storageUri = new StorageUri(new Uri(StorageEndpointUrl));
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(StorageConnectionString);
-            CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
 
-            CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference(StorageContainerName);
-            CloudBlob cloudBlob = cloudBlobContainer.GetBlobReference("2019_PricePaidData.txt");
-            CloudBlockBlob blockBlob = cloudBlobContainer.GetBlockBlobReference("2019_PricePaidData.txt");
-
-            int maxRowCount = 1;
-            int fileNumberCount = 1;
-            FileName = FileName + DateTime.Now.ToString("dd-MMM-yyyy") + "_";
+            blockBlob = cloudBlobContainer.GetBlockBlobReference("2019_PricePaidData.txt"); //mergedfiles.txt
 
             using (var fileStream = System.IO.File.OpenWrite("myfile.txt"))
             {
                 await blockBlob.DownloadToStreamAsync(fileStream);
             }
+
+
+            int maxRowCount = 1;
+            int fileNumberCount = 1;
+            FileName = FileName + DateTime.Now.ToString("dd-MMM-yyyy") + "_";
+
+
             using (StreamReader reader = new StreamReader("myfile.txt"))
             {
                 while (!reader.EndOfStream)
@@ -92,8 +117,8 @@ namespace FunctionApp
                         using (StreamWriter writer = new StreamWriter(FileName + fileNumberCount + ".txt", append: true))
                         {
                             writer.AutoFlush = true;
-                            writer.WriteLine(line);
-
+                            await writer.WriteLineAsync(line);
+                            //writeline takes 7:03 am and end at 10:38 am for 570 mb/ 3,459340
                         }
                     }
                     else
@@ -108,5 +133,31 @@ namespace FunctionApp
 
         }
 
+        public static List<string> GetStorageFiles()
+        {
+            Intialiaze();
+
+            List<string> lstFileName = new List<string>();
+            foreach (BlobItem blobItem in blobContainerClient.GetBlobs())
+            {
+                if (blobItem.Name.ToLower() != "ok.txt") // send the list of files except the ok file.
+                {
+                    lstFileName.Add(blobItem.Name);
+                }
+            }
+
+            return lstFileName;
+        }
+
+        public static async Task DownloadFileAsync(string fileName)
+        {
+            blockBlob = cloudBlobContainer.GetBlockBlobReference(fileName);
+
+            using (var fileStream = System.IO.File.OpenWrite(fileName))
+            {
+                await blockBlob.DownloadToStreamAsync(fileStream);
+            }
+            
+        }
     }
 }
