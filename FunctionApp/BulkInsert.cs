@@ -17,6 +17,7 @@ namespace FunctionApp
     public static class BulkInsert
     {
 
+        static int TimeToLive;
         static string CosmosDBEndpointUrl;
         static string CosmosDBAuthorizationKey;
         static string StorageAccountName;
@@ -38,7 +39,7 @@ namespace FunctionApp
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             Intialiaze();
 
-             ReadFileFromStorage();
+            ReadFileFromStorage();
 
             //SplitStorageFile();
         }
@@ -52,6 +53,7 @@ namespace FunctionApp
                     .Build();
 
 
+            TimeToLive = Int32.Parse(config["TimeToLive"]);
 
             CosmosDBEndpointUrl = config.GetSection("CosmosDB")["CosmosDBEndpointUrl"];
             CosmosDBAuthorizationKey = config.GetSection("Dev_CosmosDB")["CosmosDBAuthorizationKey"];
@@ -182,8 +184,10 @@ namespace FunctionApp
         {
 
             string[] pricedataArray = line.Split(',');
+            Guid guid = Guid.NewGuid();
             PricePaidData ppd = new PricePaidData()
             {
+                ID = guid,
                 Transaction_unique_identifieroperty = pricedataArray[0],
                 Price = pricedataArray[1],
                 Date_of_Transfer = pricedataArray[2],
@@ -199,7 +203,9 @@ namespace FunctionApp
                 District = pricedataArray[12],
                 County = pricedataArray[13],
                 PPD_Category = pricedataArray[14],
-                Record_Status = pricedataArray[15]
+                Record_Status = pricedataArray[15],
+                //setting ttl for each record
+                //TimeToLive = 120
 
             };
             return ppd;
@@ -227,7 +233,21 @@ namespace FunctionApp
             //CosmosClient client = new CosmosClient(CosmosDBEndpointUrl, CosmosDBAuthorizationKey, options);
             CosmosClient client = new CosmosClient(CosmosDBConnectionString, options);
             Database database = await client.CreateDatabaseIfNotExistsAsync(DatabaseName);
-            Container container = await database.CreateContainerIfNotExistsAsync(ContainerName, "/County");
+            Container container = await database.DefineContainer(ContainerName, "/County")
+                    .WithIndexingPolicy()
+                        .WithIndexingMode(IndexingMode.Consistent)
+                        .WithIncludedPaths()
+                            .Attach()
+                        .WithExcludedPaths()
+                            .Path("/*")
+                            .Attach()
+                    .Attach()
+                   .WithDefaultTimeToLive(TimeToLive)
+                .CreateIfNotExistsAsync();
+
+
+            //Container container = await database.CreateContainerIfNotExistsAsync(ContainerName, "/County");
+
             //database.ReplaceThroughputAsync()
 
             //ThroughputResponse throughput = await container.ReplaceThroughputAsync(20000);
@@ -240,7 +260,21 @@ namespace FunctionApp
             foreach (var item in lstPricedata.Take(100000))
             {
                 cnt++; // only used for debugging to see current record index being processed
-                tasks.Add(container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.County)));
+                //tasks.Add(container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.County)));
+
+
+                tasks.Add(
+                    container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.County))
+                    .ContinueWith((Task<ItemResponse<PricePaidData>> task) =>
+                    {
+                        if (!task.IsCompletedSuccessfully)
+                        {
+                            AggregateException innerExceptions = task.Exception.Flatten();
+                            CosmosException cosmosException = innerExceptions.InnerExceptions.FirstOrDefault(innerEx => innerEx is CosmosException) as CosmosException;
+                            // Console.WriteLine($"Item {item.Transaction_unique_identifieroperty} failed with status code {cosmosException.StatusCode}");
+                            //write to the log file for exception records
+                        }
+                    }));
             }
 
             await Task.WhenAll(tasks);

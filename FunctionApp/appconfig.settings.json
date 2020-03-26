@@ -1,6 +1,6 @@
 {
   "IsEncrypted": false,
-
+  "TimeToLive" : "120",
   "SourceFile": {
     "FileMaxRows": "100000",
     "FileName": "PriceData_", // "PriceData_DD-MMM-YYY_FileSeqNumber",

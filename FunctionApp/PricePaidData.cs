@@ -12,6 +12,7 @@ namespace FunctionApp
     {
 
         [JsonProperty(PropertyName = "id")]
+        public Guid ID { get; set; }
         public string Transaction_unique_identifieroperty { get; set; }
         public string Price { get; set; }
 
@@ -30,6 +31,9 @@ namespace FunctionApp
         public string County { get; set; }
         public string PPD_Category{ get; set; }
         public string Record_Status { get; set; }
+
+        //[JsonProperty(PropertyName = "ttl", NullValueHandling = NullValueHandling.Ignore)]
+        //public int? TimeToLive { get; set; }
 
     }
 }
