@@ -34,7 +34,7 @@ namespace FunctionApp
         static string FileName;
 
         [FunctionName("BulkInsert")]
-        public static void Run([TimerTrigger("0 */3 *  * * *")]TimerInfo myTimer, ILogger log)
+        public static void Run([TimerTrigger("0 * 23  * * *")]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             Intialiaze();
@@ -232,7 +232,7 @@ namespace FunctionApp
             //CosmosClient client = new CosmosClient(CosmosDBEndpointUrl, CosmosDBAuthorizationKey, options);
             CosmosClient client = new CosmosClient(CosmosDBConnectionString, options);
             Database database = await client.CreateDatabaseIfNotExistsAsync(DatabaseName);
-            Container container = await database.DefineContainer(ContainerName, "/County")
+            Container container = await database.DefineContainer(ContainerName, "/Postcode") ///County"
                     .WithIndexingPolicy()
                         .WithIndexingMode(IndexingMode.Consistent)
                         .WithIncludedPaths()
@@ -263,7 +263,7 @@ namespace FunctionApp
 
 
                 tasks.Add(
-                    container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.County))
+                    container.CreateItemAsync<PricePaidData>(item, new PartitionKey(item.Postcode))
                     .ContinueWith((Task<ItemResponse<PricePaidData>> task) =>
                     {
                         if (!task.IsCompletedSuccessfully)
