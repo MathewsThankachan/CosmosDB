@@ -184,10 +184,9 @@ namespace FunctionApp
         {
 
             string[] pricedataArray = line.Split(',');
-            Guid guid = Guid.NewGuid();
             PricePaidData ppd = new PricePaidData()
             {
-                ID = guid,
+                ID = Guid.NewGuid(),
                 Transaction_unique_identifieroperty = pricedataArray[0],
                 Price = pricedataArray[1],
                 Date_of_Transfer = pricedataArray[2],
